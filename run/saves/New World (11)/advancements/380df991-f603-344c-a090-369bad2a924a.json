@@ -1,0 +1,26 @@
+{
+  "minecraft:recipes/building_blocks/emerald_block": {
+    "criteria": {
+      "has_emerald": "2020-11-22 03:44:29 -0600"
+    },
+    "done": true
+  },
+  "minecraft:adventure/adventuring_time": {
+    "criteria": {
+      "minecraft:cold_ocean": "2020-11-22 03:43:01 -0600",
+      "minecraft:forest": "2020-11-22 03:46:47 -0600",
+      "minecraft:mountains": "2020-11-22 03:48:45 -0600",
+      "minecraft:desert_hills": "2020-11-22 03:43:24 -0600",
+      "minecraft:desert": "2020-11-22 03:43:23 -0600",
+      "minecraft:deep_frozen_ocean": "2020-11-22 03:43:02 -0600",
+      "minecraft:beach": "2020-11-22 03:42:44 -0600",
+      "minecraft:dark_forest": "2020-11-22 03:48:39 -0600",
+      "minecraft:river": "2020-11-22 03:43:00 -0600",
+      "minecraft:wooded_mountains": "2020-11-22 03:48:54 -0600",
+      "minecraft:savanna": "2020-11-22 03:43:32 -0600",
+      "minecraft:plains": "2020-11-22 03:42:56 -0600"
+    },
+    "done": false
+  },
+  "DataVersion": 2584
+}
