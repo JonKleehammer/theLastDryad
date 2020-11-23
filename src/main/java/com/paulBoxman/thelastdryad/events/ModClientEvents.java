@@ -4,11 +4,19 @@ import com.paulBoxman.thelastdryad.TheLastDryad;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.monster.ZombieEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.potion.*;
 import net.minecraft.util.FoodStats;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeGenerationSettings;
 import net.minecraft.world.biome.Biomes;
@@ -24,14 +32,13 @@ import net.minecraft.world.gen.placement.TopSolidRangeConfig;
 import net.minecraftforge.common.world.BiomeGenerationSettingsBuilder;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.world.BiomeLoadingEvent;
-import net.minecraftforge.event.world.ChunkDataEvent;
-import net.minecraftforge.event.world.ChunkEvent;
-import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.world.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -48,18 +55,29 @@ public class ModClientEvents {
     PlayerEntity player = (PlayerEntity) entity;
     World world = entity.getEntityWorld();
 
+//    player.sendMessage(ITextComponent.getTextComponentOrEmpty(Long.toString(world.getDayTime())), player.getUniqueID());
+
 
     BlockPos entityBlockPos = entity.getPosition();
     FoodStats food = player.getFoodStats();
     BlockState belowBlock = world.getBlockState(entityBlockPos.add(0, -1, 0));
 
     // if the player can see the sky fill up saturation
-    if (world.canBlockSeeSky(entityBlockPos) || belowBlock.getBlock() == Blocks.SHROOMLIGHT) {
-      food.setFoodSaturationLevel(20);
-      return;
+    if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() < 12750)
+            || belowBlock.getBlock() == Blocks.SHROOMLIGHT) {
+      if (food.getFoodLevel() < 20){
+        food.setFoodLevel(food.getFoodLevel() + 1);
+        if (food.getFoodLevel() == 20) {
+          player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.0f);
+        }
+      }
+      food.setFoodSaturationLevel(food.getFoodLevel());
+
+      player.addPotionEffect(new EffectInstance(Effects.SPEED, 219, 1));
+      player.addPotionEffect(new EffectInstance(Effects.HASTE, 219, 1));
     }
     else {
-      food.addExhaustion(0.004f);
+        food.addExhaustion(0.006f);
     }
   }
 
@@ -75,28 +93,54 @@ public class ModClientEvents {
     event.setCanceled(true);
   }
 
+  private static final String NBT_KEY = TheLastDryad.MOD_ID + ".firstjoin";
   @SubscribeEvent
-  public static void noGrassGeneration(ChunkEvent.Load event) {
-    IChunk loadingChunk = event.getChunk();
+  public static void grassBlockOnJoin(PlayerEvent.PlayerLoggedInEvent event){
 
+    PlayerEntity player = event.getPlayer();
 
-//    Heightmap heightmap = loadingChunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
+    CompoundNBT data = player.getPersistentData();
+    CompoundNBT persistent;
+    if (!data.contains(player.PERSISTED_NBT_TAG)) {
+      data.put(player.PERSISTED_NBT_TAG, (persistent = new CompoundNBT()));
+    }
+    else {
+      persistent = data.getCompound(player.PERSISTED_NBT_TAG);
+    }
 
-    for (int x = 0; x < 16; x++) {
-      for (int z = 0; z < 16; z++) {
-        for (int y = 0; y < loadingChunk.getHeight(); y++) {
-          BlockPos newBlockPos = new BlockPos(x, y, z);
-          Block targetBlock = loadingChunk.getBlockState(newBlockPos).getBlock();
-          if (targetBlock == Blocks.GRASS_BLOCK) {
-            loadingChunk.setBlockState(newBlockPos, Blocks.DIRT.getDefaultState(), false);
-          }
-        }
-      }
+    if (!persistent.contains(NBT_KEY)) {
+      persistent.putBoolean(NBT_KEY, true);
+      player.addItemStackToInventory(new ItemStack(Blocks.GRASS_BLOCK));
     }
   }
 
-  @SubscribeEvent
-  public static void noFoliage(BiomeLoadingEvent event) {
-    event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).clear();
-  }
+//  @SubscribeEvent
+//  public static void noGrassGeneration(ChunkEvent.Load event) {
+//
+//    IChunk loadingChunk = event.getChunk();
+//
+//
+////    Heightmap heightmap = loadingChunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
+//
+//    for (int x = 0; x < 16; x++) {
+//      for (int z = 0; z < 16; z++) {
+//        for (int y = 0; y < loadingChunk.getHeight(); y++) {
+//          BlockPos newBlockPos = new BlockPos(x, y, z);
+//
+//          World world = (World) event.getWorld();
+//
+//          Block targetBlock = loadingChunk.getBlockState(newBlockPos).getBlock();
+//          if (targetBlock == Blocks.GRASS_BLOCK) {
+//            loadingChunk.setBlockState(newBlockPos, Blocks.DIRT.getDefaultState(), false);
+//          }
+//        }
+//      }
+//    }
+//  }
+//
+//
+//  @SubscribeEvent
+//  public static void noFoliage(BiomeLoadingEvent event) {
+//    event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).clear();
+//  }
 }
