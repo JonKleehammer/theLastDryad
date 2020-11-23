@@ -4,10 +4,9 @@ import com.paulBoxman.thelastdryad.TheLastDryad;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.*;
 import net.minecraft.entity.monster.ZombieEntity;
+import net.minecraft.entity.passive.CowEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -15,8 +14,10 @@ import net.minecraft.potion.*;
 import net.minecraft.util.FoodStats;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeGenerationSettings;
 import net.minecraft.world.biome.Biomes;
@@ -29,9 +30,11 @@ import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.OreFeatureConfig;
 import net.minecraft.world.gen.placement.Placement;
 import net.minecraft.world.gen.placement.TopSolidRangeConfig;
+import net.minecraft.world.storage.MapData;
 import net.minecraftforge.common.world.BiomeGenerationSettingsBuilder;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -114,33 +117,76 @@ public class ModClientEvents {
     }
   }
 
-//  @SubscribeEvent
-//  public static void noGrassGeneration(ChunkEvent.Load event) {
-//
-//    IChunk loadingChunk = event.getChunk();
-//
-//
-////    Heightmap heightmap = loadingChunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
-//
-//    for (int x = 0; x < 16; x++) {
-//      for (int z = 0; z < 16; z++) {
-//        for (int y = 0; y < loadingChunk.getHeight(); y++) {
-//          BlockPos newBlockPos = new BlockPos(x, y, z);
-//
-//          World world = (World) event.getWorld();
-//
-//          Block targetBlock = loadingChunk.getBlockState(newBlockPos).getBlock();
-//          if (targetBlock == Blocks.GRASS_BLOCK) {
-//            loadingChunk.setBlockState(newBlockPos, Blocks.DIRT.getDefaultState(), false);
-//          }
-//        }
-//      }
-//    }
-//  }
-//
-//
-//  @SubscribeEvent
-//  public static void noFoliage(BiomeLoadingEvent event) {
-//    event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).clear();
-//  }
+
+  static Block hackBlock = Blocks.REDSTONE_BLOCK;
+  @SubscribeEvent
+  public static void noGrassGeneration(ChunkEvent.Load event) {
+
+    IChunk loadingChunk = event.getChunk();
+
+
+
+//    Heightmap heightmap = loadingChunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
+
+    for (int x = 0; x < 16; x++) {
+      for (int z = 0; z < 16; z++) {
+        for (int y = 0; y < loadingChunk.getHeight(); y++) {
+
+          BlockPos targetPos = new BlockPos(x, y, z);
+          Block targetBlock = loadingChunk.getBlockState(targetPos).getBlock();
+          IWorld world = event.getWorld();
+
+          if (x == 0 && y == 0 && z == 0) {
+            if (targetBlock == Blocks.BEDROCK) {
+              // First time this chunk has ever been loaded
+              loadingChunk.setBlockState(targetPos, hackBlock.getDefaultState(), false);
+            }
+            else if (targetBlock == hackBlock) {
+              return;
+            }
+          }
+
+          if (targetBlock == Blocks.GRASS_BLOCK) {
+            loadingChunk.setBlockState(targetPos, Blocks.DIRT.getDefaultState(), false);
+          }
+        }
+      }
+    }
+  }
+
+
+  @SubscribeEvent
+  public static void noFoliage(BiomeLoadingEvent event) {
+    event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).clear();
+  }
+
+  @SubscribeEvent
+  public static void killNonGrass (LivingSpawnEvent event) {
+
+    LivingEntity entity = event.getEntityLiving();
+    IWorld world = event.getWorld();
+
+    if (
+            entity.getType() == EntityType.COW ||
+            entity.getType() == EntityType.SHEEP ||
+            entity.getType() == EntityType.PIG ||
+            entity.getType() == EntityType.HORSE ||
+            entity.getType() == EntityType.RABBIT ||
+            entity.getType() == EntityType.CHICKEN ||
+            entity.getType() == EntityType.DONKEY ||
+            entity.getType() == EntityType.MULE ||
+            entity.getType() == EntityType.LLAMA ||
+            entity.getType() == EntityType.PANDA
+    )
+    {
+
+      BlockPos entityPos = entity.getPosition();
+      BlockState belowBlockState = world.getBlockState(entityPos.add(0, -1, 0));
+      Block belowBlock = belowBlockState.getBlock();
+
+      if (belowBlock != Blocks.GRASS_BLOCK) {
+        entity.remove();
+      }
+    }
+  }
 }
