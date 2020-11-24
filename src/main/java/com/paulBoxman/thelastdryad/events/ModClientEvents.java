@@ -19,12 +19,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeGenerationSettings;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.gen.NoiseChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.OreFeatureConfig;
@@ -118,7 +120,7 @@ public class ModClientEvents {
   }
 
 
-  static Block hackBlock = Blocks.REDSTONE_BLOCK;
+  static Block hackBlock = Blocks.OBSIDIAN;
   @SubscribeEvent
   public static void noGrassGeneration(ChunkEvent.Load event) {
 
@@ -137,17 +139,25 @@ public class ModClientEvents {
           IWorld world = event.getWorld();
 
           if (x == 0 && y == 0 && z == 0) {
-            if (targetBlock == Blocks.BEDROCK) {
+            if (targetBlock == hackBlock) {
+              return;
+            }
+            else  {
               // First time this chunk has ever been loaded
               loadingChunk.setBlockState(targetPos, hackBlock.getDefaultState(), false);
-            }
-            else if (targetBlock == hackBlock) {
-              return;
             }
           }
 
           if (targetBlock == Blocks.GRASS_BLOCK) {
-            loadingChunk.setBlockState(targetPos, Blocks.DIRT.getDefaultState(), false);
+            Random rand = new Random();
+            int num = rand.nextInt(2000);
+
+            if (num == 0){
+              loadingChunk.setBlockState(targetPos, Blocks.STRIPPED_ACACIA_LOG.getDefaultState(), false);
+            }
+            else {
+              loadingChunk.setBlockState(targetPos, Blocks.DIRT.getDefaultState(), false);
+            }
           }
         }
       }
@@ -161,7 +171,7 @@ public class ModClientEvents {
   }
 
   @SubscribeEvent
-  public static void killNonGrass (LivingSpawnEvent event) {
+  public static void removeHerbivores (LivingSpawnEvent event) {
 
     LivingEntity entity = event.getEntityLiving();
     IWorld world = event.getWorld();
