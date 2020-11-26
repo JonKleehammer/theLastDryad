@@ -98,7 +98,7 @@ public class Sunshrine {
         BlockPos targetBlockPos = new BlockPos(i, yLevel, j);
         Block targetBlock = getBlock(world, targetBlockPos);
 
-        world.setBlockState(targetBlockPos, Blocks.REDSTONE_BLOCK.getDefaultState());
+//        world.setBlockState(targetBlockPos, Blocks.REDSTONE_BLOCK.getDefaultState());
 
         if (i == xMin || i == xMax || j == zMin || j == zMax) {
           if (targetBlock != Blocks.GLOWSTONE) {
