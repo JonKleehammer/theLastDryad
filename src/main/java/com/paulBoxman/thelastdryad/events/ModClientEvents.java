@@ -1,6 +1,7 @@
 package com.paulBoxman.thelastdryad.events;
 
 import com.paulBoxman.thelastdryad.TheLastDryad;
+import com.paulBoxman.thelastdryad.structures.Sunshrine;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -67,11 +68,13 @@ public class ModClientEvents {
 
     BlockPos entityBlockPos = entity.getPosition();
     FoodStats food = player.getFoodStats();
-    BlockState belowBlock = world.getBlockState(entityBlockPos.add(0, -1, 0));
+    BlockPos belowBlockPos = entityBlockPos.add(0, -1, 0);
+    BlockState belowBlock = world.getBlockState(belowBlockPos);
 
     // if the player can see the sky fill up saturation
     if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() % 24000 < 12750)
-            || belowBlock.getBlock() == Blocks.SHROOMLIGHT) {
+            || Sunshrine.checkSunshrine(world, belowBlockPos)) {
+
       if (food.getFoodLevel() < 60){
         food.setFoodLevel(food.getFoodLevel() + 1);
         if (food.getFoodLevel() == 58) {
