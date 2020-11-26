@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.*;
 import net.minecraft.util.FoodStats;
+import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -20,6 +21,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeContainer;
 import net.minecraft.world.biome.BiomeGenerationSettings;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.Chunk;
@@ -41,6 +43,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import java.util.List;
 import java.util.Random;
@@ -62,21 +65,20 @@ public class ModClientEvents {
 
 //    player.sendMessage(ITextComponent.getTextComponentOrEmpty(Long.toString(world.getDayTime())), player.getUniqueID());
 
-
     BlockPos entityBlockPos = entity.getPosition();
     FoodStats food = player.getFoodStats();
     BlockState belowBlock = world.getBlockState(entityBlockPos.add(0, -1, 0));
 
     // if the player can see the sky fill up saturation
-    if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() < 12750)
+    if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() % 24000 < 12750)
             || belowBlock.getBlock() == Blocks.SHROOMLIGHT) {
-      if (food.getFoodLevel() < 20){
+      if (food.getFoodLevel() < 60){
         food.setFoodLevel(food.getFoodLevel() + 1);
-        if (food.getFoodLevel() == 20) {
+        if (food.getFoodLevel() == 58) {
           player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.0f);
         }
       }
-      food.setFoodSaturationLevel(food.getFoodLevel());
+//      food.setFoodSaturationLevel(food.getFoodLevel());
 
       player.addPotionEffect(new EffectInstance(Effects.SPEED, 219, 1));
       player.addPotionEffect(new EffectInstance(Effects.HASTE, 219, 1));
@@ -126,8 +128,6 @@ public class ModClientEvents {
 
     IChunk loadingChunk = event.getChunk();
 
-
-
 //    Heightmap heightmap = loadingChunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
 
     for (int x = 0; x < 16; x++) {
@@ -136,7 +136,6 @@ public class ModClientEvents {
 
           BlockPos targetPos = new BlockPos(x, y, z);
           Block targetBlock = loadingChunk.getBlockState(targetPos).getBlock();
-          IWorld world = event.getWorld();
 
           if (x == 0 && y == 0 && z == 0) {
             if (targetBlock == hackBlock) {
@@ -149,15 +148,7 @@ public class ModClientEvents {
           }
 
           if (targetBlock == Blocks.GRASS_BLOCK) {
-            Random rand = new Random();
-            int num = rand.nextInt(2000);
-
-            if (num == 0){
-              loadingChunk.setBlockState(targetPos, Blocks.STRIPPED_ACACIA_LOG.getDefaultState(), false);
-            }
-            else {
-              loadingChunk.setBlockState(targetPos, Blocks.DIRT.getDefaultState(), false);
-            }
+            loadingChunk.setBlockState(targetPos, Blocks.DIRT.getDefaultState(), false);
           }
         }
       }
@@ -166,7 +157,18 @@ public class ModClientEvents {
 
 
   @SubscribeEvent
-  public static void noFoliage(BiomeLoadingEvent event) {
+  public static void noFoliage(BiomeLoadingEvent event)
+  {
+
+    Biome.Category category = event.getCategory();
+    String biomeName = category.getName();
+    if (
+      biomeName.equals("nether") ||
+      biomeName.equals("the_end")
+    ) {
+      return;
+    }
+
     event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).clear();
   }
 
