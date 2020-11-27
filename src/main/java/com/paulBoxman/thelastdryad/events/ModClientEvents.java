@@ -54,6 +54,8 @@ import java.util.function.Supplier;
 @Mod.EventBusSubscriber(modid = TheLastDryad.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ModClientEvents {
 
+  static final int maxHunger = 60;
+
   @SubscribeEvent
   public static void sunlightHunger(LivingEvent.LivingUpdateEvent event) {
 
@@ -72,12 +74,11 @@ public class ModClientEvents {
     BlockState belowBlock = world.getBlockState(belowBlockPos);
 
     // if the player can see the sky fill up saturation
-    if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() % 24000 < 12750)
-            || Sunshrine.checkSunshrine(world, belowBlockPos)) {
+    if ((world.canBlockSeeSky(entityBlockPos) && world.getDayTime() % 24000 < 12750)) {
 
-      if (food.getFoodLevel() < 60){
+      if (food.getFoodLevel() < maxHunger){
         food.setFoodLevel(food.getFoodLevel() + 1);
-        if (food.getFoodLevel() == 58) {
+        if (food.getFoodLevel() == maxHunger - 5) {
           player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.0f);
         }
       }
@@ -86,8 +87,18 @@ public class ModClientEvents {
       player.addPotionEffect(new EffectInstance(Effects.SPEED, 219, 1));
       player.addPotionEffect(new EffectInstance(Effects.HASTE, 219, 1));
     }
+
     else {
+      int goldCount = Sunshrine.checkSunshrine(world, belowBlockPos);
+
+      if (goldCount > 0 && goldCount * maxHunger > food.getFoodLevel()) {
+        food.setFoodLevel(maxHunger * goldCount);
+        player.addPotionEffect(new EffectInstance(Effects.SPEED, 6000, 1));
+        player.addPotionEffect(new EffectInstance(Effects.HASTE, 6000, 1));
+      }
+      else {
         food.addExhaustion(0.006f);
+      }
     }
   }
 

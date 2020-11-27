@@ -7,15 +7,22 @@ import net.minecraft.world.World;
 
 public class Sunshrine {
 
-  public static boolean checkSunshrine(World world, BlockPos belowBlockPos) {
+  public static int checkSunshrine(World world, BlockPos belowBlockPos) {
 
-    if (getBlock(world, belowBlockPos) != Blocks.GOLD_BLOCK) { return false; }
+    if (getBlock(world, belowBlockPos) != Blocks.GOLD_BLOCK) { return 0; }
 
     int[] bounds = getShrineBounds(world, belowBlockPos);
-    if (bounds == null) { return false; }
+    if (bounds == null) { return 0; }
 
 
-    return checkShrineBounds(world, bounds, belowBlockPos.getY());
+    if (checkShrineBounds(world, bounds, belowBlockPos.getY())){
+      breakGlowstone(world, bounds, belowBlockPos.getY());
+      return getGoldCount(bounds);
+    }
+    else {
+      return 0;
+    }
+
   }
 
   private static Block getBlock(World world, BlockPos pos) {
@@ -113,8 +120,41 @@ public class Sunshrine {
       }
     }
 
+    // if we made it this far then it's a valid shrine
     return true;
   }
 
+  private static void breakGlowstone(World world, int[] shrineBounds, int yLevel) {
+
+    int xMin = shrineBounds[0];
+    int xMax = shrineBounds[1];
+    int zMin = shrineBounds[2];
+    int zMax = shrineBounds[3];
+
+    // maybe break all the glowstone?
+    for (int i = xMin; i <= xMax; i++) {
+      for (int j = zMin; j <= zMax; j++) {
+        BlockPos targetBlockPos = new BlockPos(i, yLevel, j);
+        Block targetBlock = getBlock(world, targetBlockPos);
+
+        if (targetBlock == Blocks.GLOWSTONE) {
+          world.destroyBlock(targetBlockPos, false);
+        }
+      }
+    }
+  }
+
+  private static int getGoldCount(int[] shrineBounds) {
+
+    int xMin = shrineBounds[0];
+    int xMax = shrineBounds[1];
+    int zMin = shrineBounds[2];
+    int zMax = shrineBounds[3];
+
+    int width = xMax - xMin + 1;
+    int length = zMax - zMin + 1;
+
+    return width * length;
+  }
 
 }
